@@ -46,13 +46,6 @@
 	keymap {
 		compatible = "zmk,keymap-ext", "zmk,keymap";
 
-		arrow_vertical {
-			label = "上下";
-			icon = [EF 86 93];
-			bindings = <&trans &trans>;
-			sensor-bindings = <&inc_dec_kp DOWN UP>;
-		};
-                
                 volume {
 			label = "音量";
 			icon = [EF 86 AE];
@@ -75,7 +68,13 @@
 			profile = <&profile_spring>;
 		};
 
-
+		arrow_vertical {
+			label = "上下";
+			icon = [EF 86 93];
+			bindings = <&trans &trans>;
+			sensor-bindings = <&inc_dec_kp DOWN UP>;
+		};
+                
 		arrow_horizontal {
 			label = "左右";
 			icon = [EF 86 9C];
