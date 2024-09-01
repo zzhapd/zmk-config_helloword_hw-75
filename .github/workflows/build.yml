@@ -12,6 +12,7 @@ jobs:
 
     strategy:
       matrix:
+        include:
           - { board: hw75_dynamic@A,    keymap: hw75_dynamic.keymap   }
 
     steps:
