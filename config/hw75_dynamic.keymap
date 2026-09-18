@@ -5,6 +5,7 @@
 
 #include <behaviors.dtsi>
 #include <behaviors/sensor_rotate_key_press.dtsi>
+#include <behaviors/sensor_rotate_mouse_wheel.dtsi>
 #include <dt-bindings/zmk/keys.h>
 #include <dt-bindings/zmk/rgb.h>
 #include <dt-bindings/zmk/lvgl.h>
