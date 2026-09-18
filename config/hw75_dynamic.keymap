@@ -35,6 +35,13 @@
     };
 
     behaviors {
+        /* 定义 lvkp 节点，触发编译 behavior_lvgl_key_press.c 并提供 behavior_lvgl_get_indev */
+        lvkp: lvgl_key_press {
+            compatible = "zmk,behavior-lvgl-key-press";
+            label = "LVGL_KEY_PRESS";
+            #binding-cells = <1>;
+        };
+
         switch_tasks: switch-tasks {
             compatible = "zmk,behavior-sensor-rotate";
             label = "SWITCH_TASKS";
@@ -50,7 +57,7 @@
         arrow_vertical {
             label = "上下";
             icon = [EF 86 93];
-            bindings = <&trans &trans>;
+            bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
             sensor-bindings = <&inc_dec_kp UP DOWN>;
         };
 
@@ -58,7 +65,7 @@
         volume {
             label = "音量";
             icon = [EF 86 AE];
-            bindings = <&trans &trans>;
+            bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
             sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
         };
 
@@ -66,7 +73,7 @@
         scroll {
             label = "滚动";
             icon = [EF 86 8A];
-            bindings = <&trans &trans>;
+            bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
             sensor-bindings = <&inc_dec_mw MW_DN(1) MW_UP(1)>;
         };
 
@@ -74,7 +81,7 @@
         tasks {
             label = "窗口";
             icon = [EF 85 9E];
-            bindings = <&trans &trans>;
+            bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
             sensor-bindings = <&switch_tasks>;
             profile = <&profile_spring>;
         };
@@ -83,7 +90,7 @@
         arrow_horizontal {
             label = "左右";
             icon = [EF 86 9C];
-            bindings = <&trans &trans>;
+            bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
             sensor-bindings = <&inc_dec_kp LEFT RIGHT>;
         };
     };
