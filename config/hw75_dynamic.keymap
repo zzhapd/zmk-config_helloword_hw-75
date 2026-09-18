@@ -46,11 +46,11 @@
 	keymap {
 		compatible = "zmk,keymap-ext", "zmk,keymap";
 
-		volume {
-			label = "音量";
-			icon = [EF 86 AE];
-			bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
-			sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
+		arrow_vertical {
+			label = "上下";
+			icon = [EF 86 93];
+			bindings = <&trans &trans>;
+			sensor-bindings = <&inc_dec_kp UP DOWN>;
 		};
 
 		scroll {
@@ -68,11 +68,11 @@
 			profile = <&profile_spring>;
 		};
 
-		arrow_vertical {
-			label = "上下";
-			icon = [EF 86 93];
-			bindings = <&trans &trans>;
-			sensor-bindings = <&inc_dec_kp UP DOWN>;
+		volume {
+			label = "音量";
+			icon = [EF 86 AE];
+			bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
+			sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
 		};
 
 		arrow_horizontal {
