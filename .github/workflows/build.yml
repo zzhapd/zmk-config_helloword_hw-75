@@ -1,120 +1,95 @@
+name: Build ZMK firmware
+
 on:
   push:
+    branches: [ master ]
   pull_request:
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     container:
       image: zmkfirmware/zmk-build-arm:stable
-
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - { board: hw75_keyboard@1.1, keymap: hw75_keyboard.keymap  }
-          - { board: hw75_keyboard@1.2, keymap: hw75_keyboard.keymap  }
-          - { board: hw75_dynamic@A,    keymap: hw75_dynamic.keymap   }
-          - { board: hw75_dynamic@B,    keymap: hw75_dynamic.keymap   }
+          - board: hw75_keyboard@1.2
+            keymap: hw75_keyboard.keymap
+          - board: hw75_dynamic@A
+            keymap: hw75_dynamic.keymap
 
     steps:
-      - name: Prepare variables
-        run: |
-          echo "zephyr_version=${ZEPHYR_VERSION}" >> $GITHUB_ENV
-
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
+      # 安装 pyftsubset (fonttools)、墨水屏字体转换器和 protobuf 编译器
       - name: Set up build tools
         run: |
           apt-get update
-          apt-get install -y python3-pip protobuf-compiler curl
-          curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-          apt-get install -y nodejs
-          pip install -U fonttools
+          apt-get install -y python3-pip python3-fonttools protobuf-compiler curl nodejs npm
           npm install -g lv_font_conv
+          pip install --break-system-packages fonttools || pip install fonttools
 
       - name: Cache west modules
-        uses: actions/cache@v3.0.11
-        continue-on-error: true
+        uses: actions/cache@v4
         env:
-          cache_name: cache-zephyr-${{ env.zephyr_version }}-modules
+          cache-name: cache-zephyr-modules
         with:
           path: |
             modules/
+            tools/
             zephyr/
+            bootloader/
             zmk/
-          key: ${{ runner.os }}-build-${{ env.cache_name }}-${{ hashFiles('**/west.yml', '**/build.yaml') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('config/west.yml') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache_name }}-
+            ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
-      - name: Prepare west
-        run: |
-          west init -l config
-          west update
-          west zephyr-export
-          pip install -r zephyr/scripts/requirements.txt
-          git config --global --add safe.directory $PWD
+      - name: Initialize workspace (west init)
+        run: west init -l config
 
-      - name: West build
+      - name: Update modules (west update)
+        run: west update
+
+      # 安装 Zephyr Python 依赖
+      - name: Install Zephyr Python requirements
+        run: |
+          pip install --break-system-packages -r zephyr/scripts/requirements.txt || pip install -r zephyr/scripts/requirements.txt
+
+      - name: Export Zephyr CMake package
+        run: west zephyr-export
+
+      # 解决 @A / @1.2 版本后缀匹配问题
+      - name: Prepare keymap fallback
+        run: |
+          if [ -f "config/${{ matrix.keymap }}" ]; then
+            cp "config/${{ matrix.keymap }}" "config/${{ matrix.board }}.keymap" || true
+            cp "config/${{ matrix.keymap }}" "config/default.keymap" || true
+          fi
+
+      # 编译固件（显式传入 keymap 路径）
+      - name: Build (${{ matrix.board }})
         run: |
           west build -s zmk/app -b ${{ matrix.board }} -- \
-            -DZMK_CONFIG=${GITHUB_WORKSPACE}/config \
-            -DKEYMAP_FILE=${GITHUB_WORKSPACE}/config/${{ matrix.keymap }}
-        env:
-          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+            -DZMK_CONFIG="${GITHUB_WORKSPACE}/config" \
+            -DZMK_KEYMAP="${GITHUB_WORKSPACE}/config/${{ matrix.keymap }}"
 
+      # 整理生成产物
       - name: Rename artifacts
         run: |
-          mkdir build/artifacts
-          if [ -f build/zephyr/zmk.uf2 ]; then
-            cp build/zephyr/zmk.uf2 "build/artifacts/${{ matrix.board }}-zmk.uf2"
-          fi
-          if [ -f build/zephyr/zmk.hex ]; then
-            cp build/zephyr/zmk.hex "build/artifacts/${{ matrix.board }}-zmk.hex"
-          fi
-          cp build/zephyr/zmk.bin "build/artifacts/${{ matrix.board }}-zmk.bin"
+          mkdir -p output
+          if [ -f "build/zephyr/zmk.bin" ]; then cp build/zephyr/zmk.bin "output/${{ matrix.board }}-zmk.bin"; fi
+          if [ -f "build/zephyr/zmk.hex" ]; then cp build/zephyr/zmk.hex "output/${{ matrix.board }}-zmk.hex"; fi
+          if [ -f "build/zephyr/zmk.uf2" ]; then cp build/zephyr/zmk.uf2 "output/${{ matrix.board }}-zmk.uf2"; fi
 
-      - name: Archive
-        uses: actions/upload-artifact@v3
+      # 上传固件至 Actions 页面供下载
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware
-          path: build/artifacts
-
-  release:
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    needs: build
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: firmware
-          path: firmware
-
-      - name: Prepare release notes
-        id: release
-        run: |
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "RELEASE_BODY<<$EOF" >> $GITHUB_OUTPUT
-          sed 's/{{TAG}}/${{ github.ref_name }}/g' .github/RELEASE_TEMPLATE.md >> $GITHUB_OUTPUT
-          echo "$EOF" >> $GITHUB_OUTPUT
-
-      - name: Publish release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          file: firmware/*
-          file_glob: true
-          tag: ${{ github.ref }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          body: |
-            ${{ steps.release.outputs.RELEASE_BODY }}
-          prerelease: true
+          name: ${{ matrix.board }}-firmware
+          path: output/*
