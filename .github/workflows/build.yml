@@ -25,13 +25,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 安装 pyftsubset (fonttools)、墨水屏字体转换器和 protobuf 编译器
+      # 瀚文 75 屏幕字库与旋钮 Protobuf 编译必需工具
       - name: Set up build tools
         run: |
           apt-get update
           apt-get install -y python3-pip python3-fonttools protobuf-compiler curl nodejs npm
           npm install -g lv_font_conv
           pip install --break-system-packages fonttools || pip install fonttools
+          
+          # 确保全局可执行 pyftsubset
+          cat << 'EOF' > /usr/local/bin/pyftsubset
+          #!/bin/sh
+          exec python3 -m fontTools.subset "$@"
+          EOF
+          chmod +x /usr/local/bin/pyftsubset
 
       - name: Cache west modules
         uses: actions/cache@v4
