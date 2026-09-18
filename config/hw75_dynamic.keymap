@@ -49,7 +49,7 @@
         arrow_vertical {
             label = "上下";
             icon = [EF 86 93];
-            bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
+            bindings = <&trans &trans>;
             sensor-bindings = <&inc_dec_kp UP DOWN>;
         };
 
@@ -57,7 +57,7 @@
         volume {
             label = "音量";
             icon = [EF 86 AE];
-            bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
+            bindings = <&trans &trans>;
             sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
         };
 
@@ -65,7 +65,7 @@
         scroll {
             label = "滚动";
             icon = [EF 86 8A];
-            bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
+            bindings = <&trans &trans>;
             sensor-bindings = <&inc_dec_mw MW_DN(1) MW_UP(1)>;
         };
 
@@ -73,7 +73,7 @@
         tasks {
             label = "窗口";
             icon = [EF 85 9E];
-            bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
+            bindings = <&trans &trans>;
             sensor-bindings = <&switch_tasks>;
             profile = <&profile_spring>;
         };
@@ -82,7 +82,7 @@
         arrow_horizontal {
             label = "左右";
             icon = [EF 86 9C];
-            bindings = <&lvkp LV_KEY_PREV &lvkp LV_KEY_NEXT>;
+            bindings = <&trans &trans>;
             sensor-bindings = <&inc_dec_kp LEFT RIGHT>;
         };
     };
