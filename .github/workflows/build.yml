@@ -25,7 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 瀚文 75 屏幕字库与旋钮 Protobuf 编译必需工具（不可删）
+      # 安装 pyftsubset (fonttools)、墨水屏字体转换器和 protobuf 编译器
       - name: Set up build tools
         run: |
           apt-get update
@@ -56,7 +56,7 @@ jobs:
       - name: Update modules (west update)
         run: west update
 
-      # 安装 Zephyr 构建所需的 Python 依赖
+      # 安装 Zephyr Python 依赖
       - name: Install Zephyr Python requirements
         run: |
           pip install --break-system-packages -r zephyr/scripts/requirements.txt || pip install -r zephyr/scripts/requirements.txt
@@ -64,7 +64,7 @@ jobs:
       - name: Export Zephyr CMake package
         run: west zephyr-export
 
-      # 解决 @A / @1.2 后缀导致找不到 keymap 的问题
+      # 解决 @A / @1.2 版本后缀匹配问题
       - name: Prepare keymap fallback
         run: |
           if [ -f "config/${{ matrix.keymap }}" ]; then
@@ -72,14 +72,14 @@ jobs:
             cp "config/${{ matrix.keymap }}" "config/default.keymap" || true
           fi
 
-      # 编译固件（显式指定 keymap 路径）
+      # 编译固件（显式传入 keymap 路径）
       - name: Build (${{ matrix.board }})
         run: |
           west build -s zmk/app -b ${{ matrix.board }} -- \
             -DZMK_CONFIG="${GITHUB_WORKSPACE}/config" \
             -DZMK_KEYMAP="${GITHUB_WORKSPACE}/config/${{ matrix.keymap }}"
 
-      # 整理生成的固件文件
+      # 整理生成产物
       - name: Rename artifacts
         run: |
           mkdir -p output
@@ -87,7 +87,7 @@ jobs:
           if [ -f "build/zephyr/zmk.hex" ]; then cp build/zephyr/zmk.hex "output/${{ matrix.board }}-zmk.hex"; fi
           if [ -f "build/zephyr/zmk.uf2" ]; then cp build/zephyr/zmk.uf2 "output/${{ matrix.board }}-zmk.uf2"; fi
 
-      # 上传固件至 Actions
+      # 上传固件至 Actions 页面供下载
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
